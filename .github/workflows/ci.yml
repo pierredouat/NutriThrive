@@ -1,0 +1,51 @@
+name: CI - Build & Test
+
+# Quand exécuter?
+on:
+  push:
+    branches: [ main, develop ]  # Quand vous push sur main ou develop
+  pull_request:
+    branches: [ main ]           # Quand vous créez une PR vers main
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: ubuntu-latest       # Machine virtuelle Ubuntu
+    
+    steps:
+      # 1. Checkout le code
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'      # Version Node que vous utilisez
+          cache: 'npm'            # Cache les dépendances pour accélérer
+      
+      # 3. Installer les dépendances
+      - name: Install dependencies
+        run: npm ci               # Plus rapide que npm install
+      
+      # 4. Linter (vérifier code quality)
+      - name: Run linter
+        run: npm run lint         # Si vous avez un linter configuré
+        continue-on-error: true   # Ne bloque pas si erreurs lint
+      
+      # 5. Tests (si vous en avez)
+      - name: Run tests
+        run: npm test
+        continue-on-error: true   # Ne bloque pas si tests fail (pour MVP)
+      
+      # 6. Build
+      - name: Build app
+        run: npx expo export       # Build Expo
+      
+      # 7. Upload build artifacts (optionnel)
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build
+          path: dist/
+          retention-days: 7       # Garde 7 jours
